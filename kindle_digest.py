@@ -9,6 +9,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import time
+import re
 
 # Configuration
 CONFIG = {
@@ -80,7 +81,7 @@ def fetch_full_article(url):
         print(f"    ✗ Error fetching article: {e}")
         return None
 
-def fetch_articles(feed_url, max_articles=3):
+def fetch_articles(feed_url, max_articles=5):
     """Fetch articles from an RSS feed and get full content"""
     try:
         feed = feedparser.parse(feed_url)
@@ -238,7 +239,6 @@ def create_html_digest(all_feeds_articles):
                 
                 # Create short summary (first 150 chars of content)
                 content = article.get('full_content') or article.get('summary', '')
-                import re
                 content = re.sub('<[^<]+?>', '', content).strip()
                 short_summary = content[:150] + '...' if len(content) > 150 else content
                 
@@ -253,7 +253,6 @@ def create_html_digest(all_feeds_articles):
     
     # Reset counter for article content
     article_counter = 0
-    """
     
     for idx, feed_data in enumerate(all_feeds_articles):
         feed_name = feed_data['name']
@@ -271,8 +270,7 @@ def create_html_digest(all_feeds_articles):
                 content = article.get('full_content') or article.get('summary', 'Content not available')
                 
                 # Clean up content
-                import re
-                content = re.sub('<[^<]+?>', '', content)  # Remove HTML tags
+                content = re.sub('<[^<]+?>', '', content)
                 content = content.strip()
                 
                 # Format paragraphs
