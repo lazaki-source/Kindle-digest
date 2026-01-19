@@ -6,17 +6,19 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
 import os
-import tempfile
+import requests
+from bs4 import BeautifulSoup
+import time
 
 # Configuration
 CONFIG = {
     'feeds': [
-        {'name': 'BBC News', 'url': 'http://feeds.bbci.co.uk/news/rss.xml', 'max_articles': 5},
-        {'name': 'The Telegraph', 'url': 'https://www.telegraph.co.uk/rss.xml', 'max_articles': 5},
-        {'name': 'Sky News', 'url': 'https://feeds.skynews.com/feeds/rss/home.xml', 'max_articles': 5},
-        {'name': 'TechRadar', 'url': 'https://www.techradar.com/rss', 'max_articles': 5},
-        {'name': 'MacRumors', 'url': 'https://www.macrumors.com/feed/', 'max_articles': 5},
-        {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/index.xml', 'max_articles': 5},
+        {'name': 'BBC News', 'url': 'http://feeds.bbci.co.uk/news/rss.xml', 'max_articles': 3},
+        {'name': 'The Telegraph', 'url': 'https://www.telegraph.co.uk/rss.xml', 'max_articles': 3},
+        {'name': 'Sky News', 'url': 'https://feeds.skynews.com/feeds/rss/home.xml', 'max_articles': 3},
+        {'name': 'TechRadar', 'url': 'https://www.techradar.com/rss', 'max_articles': 3},
+        {'name': 'MacRumors', 'url': 'https://www.macrumors.com/feed/', 'max_articles': 3},
+        {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/index.xml', 'max_articles': 3},
     ],
     # Get credentials from environment variables (GitHub Secrets)
     'kindle_email': os.environ.get('KINDLE_EMAIL'),
@@ -24,8 +26,65 @@ CONFIG = {
     'sender_password': os.environ.get('SENDER_PASSWORD'),
 }
 
-def fetch_articles(feed_url, max_articles=5):
-    """Fetch articles from an RSS feed"""
+def fetch_full_article(url):
+    """Fetch the full article content from a URL"""
+    try:
+        print(f"    Fetching full article from {url[:50]}...")
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Remove unwanted elements
+        for element in soup.find_all(['script', 'style', 'nav', 'header', 'footer', 'aside', 'iframe']):
+            element.decompose()
+        
+        # Try common article selectors
+        article_content = None
+        selectors = [
+            'article',
+            '[role="article"]',
+            '.article-body',
+            '.article-content',
+            '.story-body',
+            '.post-content',
+            '.entry-content',
+            'main',
+        ]
+        
+        for selector in selectors:
+            article_content = soup.select_one(selector)
+            if article_content:
+                break
+        
+        if not article_content:
+            # Fallback: get main content area
+            article_content = soup.find('body')
+        
+        if article_content:
+            # Extract paragraphs
+            paragraphs = article_content.find_all('p')
+            text_content = '\n\n'.join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
+            
+            # Basic cleanup
+            text_content = text_content.replace('\n\n\n', '\n\n')
+            
+            if len(text_content) > 200:  # Only return if we got substantial content
+                return text_content
+        
+        return None
+        
+    except Exception as e:
+        print(f"    ✗ Error fetching article: {e}")
+        return None
+
+def fetch_articles(feed_url, max_articles=3):
+    """Fetch articles from an RSS feed and get full content"""
     try:
         feed = feedparser.parse(feed_url)
         articles = []
@@ -34,9 +93,23 @@ def fetch_articles(feed_url, max_articles=5):
             article = {
                 'title': entry.get('title', 'No title'),
                 'link': entry.get('link', ''),
-                'summary': entry.get('summary', entry.get('description', 'No summary available')),
-                'published': entry.get('published', 'Unknown date')
+                'summary': entry.get('summary', entry.get('description', '')),
+                'published': entry.get('published', 'Unknown date'),
+                'full_content': None
             }
+            
+            # Fetch full article content
+            if article['link']:
+                full_content = fetch_full_article(article['link'])
+                if full_content:
+                    article['full_content'] = full_content
+                    print(f"    ✓ Got full article ({len(full_content)} chars)")
+                else:
+                    print(f"    ⚠ Using summary instead")
+                
+                # Be nice to servers - small delay between requests
+                time.sleep(1)
+            
             articles.append(article)
         
         return articles
@@ -65,37 +138,49 @@ def create_html_digest(all_feeds_articles):
                 color: #333;
                 border-bottom: 3px solid #333;
                 padding-bottom: 10px;
+                page-break-after: avoid;
             }}
             h2 {{
                 color: #555;
-                margin-top: 30px;
+                margin-top: 40px;
                 border-bottom: 2px solid #ddd;
                 padding-bottom: 5px;
+                page-break-after: avoid;
             }}
             .article {{
-                margin-bottom: 25px;
-                padding-bottom: 15px;
-                border-bottom: 1px solid #eee;
+                margin-bottom: 40px;
+                padding-bottom: 20px;
+                border-bottom: 2px solid #ddd;
+                page-break-inside: avoid;
             }}
             .article-title {{
-                font-size: 18px;
+                font-size: 20px;
                 font-weight: bold;
                 color: #000;
-                margin-bottom: 5px;
+                margin-bottom: 8px;
+                page-break-after: avoid;
             }}
             .article-meta {{
                 color: #666;
                 font-size: 14px;
-                margin-bottom: 10px;
+                margin-bottom: 15px;
+                font-style: italic;
             }}
-            .article-summary {{
+            .article-content {{
                 color: #333;
-                margin-bottom: 10px;
+                text-align: justify;
+                margin-bottom: 15px;
             }}
             .article-link {{
                 color: #0066cc;
                 text-decoration: none;
                 font-size: 14px;
+                display: block;
+                margin-top: 10px;
+            }}
+            .source-divider {{
+                margin: 50px 0 30px 0;
+                page-break-before: always;
             }}
         </style>
     </head>
@@ -104,27 +189,35 @@ def create_html_digest(all_feeds_articles):
         <p style="color: #666; font-style: italic;">{today}</p>
     """
     
-    for feed_data in all_feeds_articles:
+    for idx, feed_data in enumerate(all_feeds_articles):
         feed_name = feed_data['name']
         articles = feed_data['articles']
         
         if articles:
-            html += f"\n<h2>{feed_name}</h2>\n"
+            divider_class = 'source-divider' if idx > 0 else ''
+            html += f'\n<h2 class="{divider_class}">{feed_name}</h2>\n'
             
             for article in articles:
-                # Clean up summary (remove HTML tags if present)
-                summary = article['summary']
-                # Basic HTML tag removal
+                # Use full content if available, otherwise use summary
+                content = article.get('full_content') or article.get('summary', 'Content not available')
+                
+                # Clean up content
                 import re
-                summary = re.sub('<[^<]+?>', '', summary)
-                summary = summary[:500] + '...' if len(summary) > 500 else summary
+                content = re.sub('<[^<]+?>', '', content)  # Remove HTML tags
+                content = content.strip()
+                
+                # Format paragraphs
+                paragraphs = content.split('\n\n')
+                formatted_content = ''.join([f'<p>{p.strip()}</p>' for p in paragraphs if p.strip()])
                 
                 html += f"""
                 <div class="article">
                     <div class="article-title">{article['title']}</div>
                     <div class="article-meta">{article['published']}</div>
-                    <div class="article-summary">{summary}</div>
-                    <a href="{article['link']}" class="article-link">Read full article →</a>
+                    <div class="article-content">
+                        {formatted_content}
+                    </div>
+                    <a href="{article['link']}" class="article-link">Original article: {article['link']}</a>
                 </div>
                 """
     
@@ -193,7 +286,7 @@ def main():
             'name': feed['name'],
             'articles': articles
         })
-        print(f"  ✓ Found {len(articles)} articles\n")
+        print(f"  ✓ Processed {len(articles)} articles\n")
     
     # Create HTML digest
     print("Creating digest...")
