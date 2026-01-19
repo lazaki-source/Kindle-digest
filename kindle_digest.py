@@ -2,10 +2,11 @@ import feedparser
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
+from email.mime.base import MIMEBase
+from email import encoders
 from datetime import datetime
 import os
-from pathlib import Path
+import tempfile
 
 # Configuration
 CONFIG = {
@@ -17,6 +18,7 @@ CONFIG = {
         {'name': 'MacRumors', 'url': 'https://www.macrumors.com/feed/', 'max_articles': 5},
         {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/index.xml', 'max_articles': 5},
     ],
+    # Get credentials from environment variables (GitHub Secrets)
     'kindle_email': os.environ.get('KINDLE_EMAIL'),
     'sender_email': os.environ.get('SENDER_EMAIL'),
     'sender_password': os.environ.get('SENDER_PASSWORD'),
@@ -134,7 +136,7 @@ def create_html_digest(all_feeds_articles):
     return html
 
 def send_to_kindle(html_content, config):
-    """Send the digest to Kindle via email"""
+    """Send the digest to Kindle via email with HTML attachment"""
     try:
         # Create message
         msg = MIMEMultipart()
@@ -142,9 +144,19 @@ def send_to_kindle(html_content, config):
         msg['To'] = config['kindle_email']
         msg['Subject'] = f"Daily News Digest - {datetime.now().strftime('%B %d, %Y')}"
         
-        # Attach HTML
-        html_part = MIMEText(html_content, 'html')
-        msg.attach(html_part)
+        # Add a simple text body
+        body = "Your daily news digest is attached."
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Create HTML file attachment
+        filename = f"news_digest_{datetime.now().strftime('%Y%m%d')}.html"
+        
+        # Attach the HTML file
+        attachment = MIMEBase('application', 'octet-stream')
+        attachment.set_payload(html_content.encode('utf-8'))
+        encoders.encode_base64(attachment)
+        attachment.add_header('Content-Disposition', f'attachment; filename={filename}')
+        msg.attach(attachment)
         
         # Connect to Gmail SMTP
         print("Connecting to email server...")
@@ -188,9 +200,12 @@ def main():
     html_content = create_html_digest(all_feeds_articles)
     
     # Optionally save to file for testing
-    with open('digest_preview.html', 'w', encoding='utf-8') as f:
-        f.write(html_content)
-    print("✓ Preview saved to digest_preview.html\n")
+    try:
+        with open('digest_preview.html', 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        print("✓ Preview saved to digest_preview.html\n")
+    except:
+        print("(Preview file not saved - this is normal on GitHub Actions)\n")
     
     # Send to Kindle
     print("Sending to Kindle...")
