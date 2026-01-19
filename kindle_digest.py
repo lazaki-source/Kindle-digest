@@ -14,9 +14,9 @@ import re
 # Configuration
 CONFIG = {
     'feeds': [
-        {'name': 'BBC News', 'url': 'http://feeds.bbci.co.uk/news/rss.xml', 'max_articles': 5},
-        {'name': 'The Economist', 'url': 'https://www.economist.com/rss', 'max_articles': 5},
-        {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/partner/subscriber-only-full-feed/rss.xml', 'max_articles': 5},
+        {'name': 'BBC News', 'url': 'http://feeds.bbci.co.uk/news/rss.xml', 'max_articles': 10},
+        {'name': 'The Economist - World', 'url': 'https://www.economist.com/the-world-this-week/rss.xml', 'max_articles': 10},
+        {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/partner/subscriber-only-full-feed/rss.xml', 'max_articles': 10},
     ],
     # Get credentials from environment variables (GitHub Secrets)
     'kindle_email': os.environ.get('KINDLE_EMAIL'),
@@ -125,6 +125,8 @@ def create_html_digest(all_feeds_articles):
     <head>
         <meta charset="UTF-8">
         <meta name="author" content="Claude AI">
+        <meta name="DC.creator" content="Claude AI">
+        <meta name="DC.publisher" content="Daily News Digest">
         <title>Daily News Digest - {today}</title>
         <style>
             body {{
