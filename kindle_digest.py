@@ -239,7 +239,7 @@ def send_to_kindle(html_content, config):
         msg.attach(MIMEText(body, 'plain'))
         
         # Create HTML file attachment
-        filename = f"news_digest_{datetime.now().strftime('%Y%m%d')}.html"
+        filename = f"Daily News Digest {datetime.now().strftime('%d-%m-%Y')}.html"
         
         # Attach the HTML file
         attachment = MIMEBase('application', 'octet-stream')
