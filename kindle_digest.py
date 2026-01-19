@@ -123,6 +123,8 @@ def create_html_digest(all_feeds_articles):
     <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="author" content="Claude AI">
+        <title>Daily News Digest - {today}</title>
         <style>
             body {{
                 font-family: Georgia, serif;
