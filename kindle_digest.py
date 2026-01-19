@@ -302,7 +302,7 @@ def send_to_kindle(html_content, config):
     try:
         # Create message
         msg = MIMEMultipart()
-        msg['From'] = f"Claude AI <{config['sender_email']}>"
+        msg['From'] = config['sender_email']
         msg['To'] = config['kindle_email']
         msg['Subject'] = f"Daily News Digest - {datetime.now().strftime('%B %d, %Y')}"
         
@@ -310,9 +310,8 @@ def send_to_kindle(html_content, config):
         body = "Your daily news digest is attached."
         msg.attach(MIMEText(body, 'plain'))
         
-        # Create HTML file attachment with author in filename
-        # Kindle reads author from filename format: Title_Author.html
-        filename = f"Daily News Digest {datetime.now().strftime('%d-%m-%Y')}_Claude AI.html"
+        # Create HTML file attachment
+        filename = f"Daily News Digest {datetime.now().strftime('%d-%m-%Y')}.html"
         
         # Attach the HTML file
         attachment = MIMEBase('application', 'octet-stream')
