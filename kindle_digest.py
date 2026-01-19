@@ -17,6 +17,7 @@ CONFIG = {
         {'name': 'BBC News', 'url': 'http://feeds.bbci.co.uk/news/rss.xml', 'max_articles': 10},
         {'name': 'The Guardian', 'url': 'https://www.theguardian.com/uk/rss', 'max_articles': 10},
         {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/partner/subscriber-only-full-feed/rss.xml', 'max_articles': 10},
+        {'name': 'The Athletic', 'url': 'https://theathletic.com/uk/?rss', 'max_articles': 10},
     ],
     # Get credentials from environment variables (GitHub Secrets)
     'kindle_email': os.environ.get('KINDLE_EMAIL'),
