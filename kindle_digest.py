@@ -15,7 +15,7 @@ import re
 CONFIG = {
     'feeds': [
         {'name': 'BBC News', 'url': 'http://feeds.bbci.co.uk/news/rss.xml', 'max_articles': 10},
-        {'name': 'The Economist - World', 'url': 'https://www.economist.com/the-world-this-week/rss.xml', 'max_articles': 10},
+        {'name': 'The Guardian', 'url': 'https://www.theguardian.com/uk/rss', 'max_articles': 10},
         {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/partner/subscriber-only-full-feed/rss.xml', 'max_articles': 10},
     ],
     # Get credentials from environment variables (GitHub Secrets)
@@ -302,7 +302,7 @@ def send_to_kindle(html_content, config):
     try:
         # Create message
         msg = MIMEMultipart()
-        msg['From'] = config['sender_email']
+        msg['From'] = f"Claude AI <{config['sender_email']}>"
         msg['To'] = config['kindle_email']
         msg['Subject'] = f"Daily News Digest - {datetime.now().strftime('%B %d, %Y')}"
         
@@ -310,8 +310,9 @@ def send_to_kindle(html_content, config):
         body = "Your daily news digest is attached."
         msg.attach(MIMEText(body, 'plain'))
         
-        # Create HTML file attachment
-        filename = f"Daily News Digest {datetime.now().strftime('%d-%m-%Y')}.html"
+        # Create HTML file attachment with author in filename
+        # Kindle reads author from filename format: Title_Author.html
+        filename = f"Daily News Digest {datetime.now().strftime('%d-%m-%Y')}_Claude AI.html"
         
         # Attach the HTML file
         attachment = MIMEBase('application', 'octet-stream')
