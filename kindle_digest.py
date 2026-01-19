@@ -181,11 +181,78 @@ def create_html_digest(all_feeds_articles):
                 margin: 50px 0 30px 0;
                 page-break-before: always;
             }}
+            .toc {{
+                margin: 30px 0;
+                padding: 20px;
+                background-color: #f9f9f9;
+                border: 1px solid #ddd;
+                page-break-after: always;
+            }}
+            .toc h3 {{
+                color: #333;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                font-size: 18px;
+            }}
+            .toc-item {{
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #e0e0e0;
+            }}
+            .toc-title {{
+                font-weight: bold;
+                color: #0066cc;
+                text-decoration: none;
+                display: block;
+                margin-bottom: 5px;
+            }}
+            .toc-title:hover {{
+                text-decoration: underline;
+            }}
+            .toc-summary {{
+                font-size: 14px;
+                color: #666;
+                line-height: 1.4;
+            }}
         </style>
     </head>
     <body>
         <h1>Daily News Digest</h1>
         <p style="color: #666; font-style: italic;">{today}</p>
+    """
+    
+    # Build table of contents
+    html += '\n<div class="toc">\n<h2>Table of Contents</h2>\n'
+    
+    article_counter = 0
+    for feed_data in all_feeds_articles:
+        feed_name = feed_data['name']
+        articles = feed_data['articles']
+        
+        if articles:
+            html += f'<h3>{feed_name}</h3>\n'
+            
+            for article in articles:
+                article_counter += 1
+                article_id = f"article-{article_counter}"
+                
+                # Create short summary (first 150 chars of content)
+                content = article.get('full_content') or article.get('summary', '')
+                import re
+                content = re.sub('<[^<]+?>', '', content).strip()
+                short_summary = content[:150] + '...' if len(content) > 150 else content
+                
+                html += f"""
+                <div class="toc-item">
+                    <a href="#{article_id}" class="toc-title">{article['title']}</a>
+                    <div class="toc-summary">{short_summary}</div>
+                </div>
+                """
+    
+    html += '</div>\n'
+    
+    # Reset counter for article content
+    article_counter = 0
     """
     
     for idx, feed_data in enumerate(all_feeds_articles):
@@ -197,6 +264,9 @@ def create_html_digest(all_feeds_articles):
             html += f'\n<h2 class="{divider_class}">{feed_name}</h2>\n'
             
             for article in articles:
+                article_counter += 1
+                article_id = f"article-{article_counter}"
+                
                 # Use full content if available, otherwise use summary
                 content = article.get('full_content') or article.get('summary', 'Content not available')
                 
@@ -210,7 +280,7 @@ def create_html_digest(all_feeds_articles):
                 formatted_content = ''.join([f'<p>{p.strip()}</p>' for p in paragraphs if p.strip()])
                 
                 html += f"""
-                <div class="article">
+                <div class="article" id="{article_id}">
                     <div class="article-title">{article['title']}</div>
                     <div class="article-meta">{article['published']}</div>
                     <div class="article-content">
