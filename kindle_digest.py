@@ -13,12 +13,9 @@ import time
 # Configuration
 CONFIG = {
     'feeds': [
-        {'name': 'BBC News', 'url': 'http://feeds.bbci.co.uk/news/rss.xml', 'max_articles': 3},
-        {'name': 'The Telegraph', 'url': 'https://www.telegraph.co.uk/rss.xml', 'max_articles': 3},
-        {'name': 'Sky News', 'url': 'https://feeds.skynews.com/feeds/rss/home.xml', 'max_articles': 3},
-        {'name': 'TechRadar', 'url': 'https://www.techradar.com/rss', 'max_articles': 3},
-        {'name': 'MacRumors', 'url': 'https://www.macrumors.com/feed/', 'max_articles': 3},
-        {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/index.xml', 'max_articles': 3},
+        {'name': 'BBC News', 'url': 'http://feeds.bbci.co.uk/news/rss.xml', 'max_articles': 5},
+        {'name': 'The Economist', 'url': 'https://www.economist.com/rss', 'max_articles': 5},
+        {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/partner/subscriber-only-full-feed/rss.xml', 'max_articles': 5},
     ],
     # Get credentials from environment variables (GitHub Secrets)
     'kindle_email': os.environ.get('KINDLE_EMAIL'),
