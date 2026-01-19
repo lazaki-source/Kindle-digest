@@ -17,10 +17,9 @@ CONFIG = {
         {'name': 'MacRumors', 'url': 'https://www.macrumors.com/feed/', 'max_articles': 5},
         {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/index.xml', 'max_articles': 5},
     ],
-    # Email settings - FILL THESE IN
-    'kindle_email': 'your_kindle@kindle.com',  # Your Kindle email address
-    'sender_email': 'your_email@gmail.com',     # Your Gmail address
-    'sender_password': 'your_app_password',     # Gmail app password (NOT your regular password)
+    'kindle_email': os.environ.get('KINDLE_EMAIL'),
+    'sender_email': os.environ.get('SENDER_EMAIL'),
+    'sender_password': os.environ.get('SENDER_PASSWORD'),
 }
 
 def fetch_articles(feed_url, max_articles=5):
